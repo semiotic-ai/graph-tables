@@ -18,6 +18,6 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "graph-tables": "^1.0.0"
+    "@semiotic-labs/graph-tables": "^1.0.0"
   }
 }

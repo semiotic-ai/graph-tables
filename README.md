@@ -34,13 +34,13 @@ graph-tables</h1>
 ## Install
 
 ```sh
-npm install graph-tables
+npm install @semiotic-labs/graph-tables
 ```
 
 ## Usage
 
 ```ts
-import {parse} from 'graph-tables';
+import {parse} from '@semiotic-labs/graph-tables';
 
 const simple_schema = `
     type SomeComplexTableErc20Name  @entity {

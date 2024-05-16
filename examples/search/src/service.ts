@@ -1,4 +1,4 @@
-import { parse, Layout } from 'graph-tables';
+import { parse, Layout } from '@semiotic-labs/graph-tables';
 
 export const DEFAULT_SUBGRAPH_API_ENDPOINT =
   'https://api.thegraph.com/subgraphs/name/graphprotocol/graph-network-arbitrum'; // mainnet subgraphs
