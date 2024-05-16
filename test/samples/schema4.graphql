@@ -1,0 +1,35 @@
+type OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Swap @entity(immutable: true) {
+  id: Bytes!
+  sender: Bytes! # address
+  inputAmount: BigInt! # uint256
+  inputToken: Bytes! # address
+  amountOut: BigInt! # uint256
+  outputToken: Bytes! # address
+  slippage: BigInt! # int256
+  referralCode: BigInt! # uint32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SwapMulti @entity(immutable: true) {
+  id: Bytes!
+  sender: Bytes! # address
+  amountsIn: [BigInt!]! # uint256[]
+  tokensIn: [Bytes!]! # address[]
+  amountsOut: [BigInt!]! # uint256[]
+  tokensOut: [Bytes!]! # address[]
+  referralCode: BigInt! # uint32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

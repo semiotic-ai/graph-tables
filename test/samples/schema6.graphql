@@ -1,0 +1,363 @@
+#########################
+# Enums
+#########################
+
+enum JoinRequestStatus {
+  Requested
+  Accepted
+  Rejected
+}
+
+enum UserPartyStatus {
+  Joined
+  Left
+  Kicked
+}
+
+enum AssetType {
+  ERC20
+  ERC721
+}
+
+enum ShareChangeType {
+  SharesBought
+  SharesRedeemed
+}
+
+enum PartyEventType {
+  PartyCreated
+  PartyClosed
+  MemberJoined
+  MemberKicked
+  MemberLeft
+  TokenSwap
+  Deposit
+  Withdraw
+  LimitOrderFill
+}
+
+#########################
+# Low-level entities
+#########################
+
+type AssetAmount @entity {
+  id: ID!
+  asset: Asset!
+  amount: BigDecimal!
+  price: BigDecimal
+}
+
+type SharesBoughtEvent @entity {
+  id: ID!
+  party: Party!
+  investmentCost: InvestmentCost!
+  type: ShareChangeType!
+  investor: User!
+  investmentState: InvestmentState!
+  shares: BigDecimal!
+  asset: Asset!
+  value: BigDecimal! # This is the total USD deposit
+  fee: BigDecimal! # This is the collected deposit USD fee
+  withUncalculatedPrices: Boolean! # If true, the `value` and `fee` might not be 100% accurate
+  investmentAmount: BigDecimal!
+  feeAmount: BigDecimal!
+  sharesIssued: BigDecimal!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  partyState: PartyState!
+}
+
+type SharesRedeemedEvent @entity {
+  id: ID!
+  party: Party!
+  investmentCost: InvestmentCost!
+  type: ShareChangeType!
+  investor: User!
+  investmentState: InvestmentState!
+  shares: BigDecimal!
+  redeemedAmount: BigDecimal! # This is the Total withdraw in USD price (for the available assets)
+  fee: BigDecimal! # This is the withdraw fee in USD price (for the available assets)
+  redeemedAmounts: [AssetAmount!]!
+  payoutAssetFees: [AssetAmount!]!
+  withLiquidation: Boolean!
+  withUncalculatedPrices: Boolean! # If true, the `redeemedAmount` and `fee` might not be 100% accurate
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  partyState: PartyState!
+}
+
+#########################
+# Party event entities
+#########################
+
+type Party @entity {
+  id: ID!
+  creator: User!
+  # Party Info
+  name: String!
+  bio: String
+  img: String
+  model: String
+  purpose: String
+  isPublic: Boolean
+  minDeposit: BigInt
+  maxDeposit: BigInt
+  inception: BigInt!
+  denominationAsset: Asset!
+  infoUpdatedAt: BigInt!
+
+  # Available
+  isClosed: Boolean
+
+  # Members
+  members: [UserParty!]! @derivedFrom(field: "party")
+  membersCount: Int!
+
+  # JoinRequets
+  requests: [JoinRequest!]! @derivedFrom(field: "party")
+
+  # PartyTokenGate
+  partyTokenGate: PartyTokenGate @derivedFrom(field: "party")
+
+  # Investments
+  trackedAssets: [Asset!]!
+  investments: [Investment!]! @derivedFrom(field: "party")
+
+  # Investment cost (deposits, withdrawals)
+  investmentCost: InvestmentCost @derivedFrom(field: "party")
+
+  # Party state
+  shares: ShareState!
+  sharesHistory: [ShareState!]! @derivedFrom(field: "party")
+  portfolio: PortfolioState!
+  portfolioHistory: [PortfolioState!]! @derivedFrom(field: "party")
+  state: PartyState!
+  stateHistory: [PartyState!]! @derivedFrom(field: "party")
+  firstInvestmentState: PartyState
+
+  # Last activity
+  lastActivity: BigInt!
+}
+
+type User @entity {
+  id: ID!
+  firstSeen: BigInt!
+
+  partyOwner: Boolean!
+  partyOwnerSince: BigInt
+  partyOwning: [Party!]! @derivedFrom(field: "creator")
+
+  investor: Boolean!
+  investorSince: BigInt
+  investments: [Investment!]! @derivedFrom(field: "investor")
+
+  parties: [UserParty!] @derivedFrom(field: "user")
+  requests: [JoinRequest!] @derivedFrom(field: "user")
+}
+
+type UserParty @entity {
+  id: ID!
+  joinedSince: BigInt
+  leftAt: BigInt
+  user: User!
+  party: Party!
+  status: UserPartyStatus
+  isCreator: Boolean!
+  creatorSince: BigInt
+  isManager: Boolean!
+  managerSince: BigInt
+}
+
+type PartyTokenGate @entity {
+  id: Bytes! # Address of the Party
+  party: Party!
+  tokens: [TokenGate!] @derivedFrom(field: "partyTokenGate")
+  updatedAt: BigInt!
+}
+
+type TokenGate @entity {
+  id: ID!
+  partyTokenGate: PartyTokenGate!
+  token: Bytes! # Token address
+  name: String!
+  symbol: String!
+  decimals: Int! # 0 for ERC721
+  type: AssetType!
+  value: BigInt! # Balance for ERC20. TokenID for ERC721
+}
+
+type Investment @entity {
+  id: ID!
+  since: BigInt!
+  party: Party!
+  investor: User!
+  shares: BigDecimal!
+  state: InvestmentState!
+  stateHistory: [InvestmentState!]! @derivedFrom(field: "investment")
+}
+
+type InvestmentState @entity {
+  id: ID!
+  timestamp: BigInt!
+  party: Party!
+  investor: User!
+  investment: Investment!
+  shares: BigDecimal!
+  partyState: PartyState!
+}
+
+type ShareState @entity {
+  id: ID!
+  party: Party!
+  isLatest: Boolean!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  totalSupply: BigDecimal!
+}
+
+type PortfolioState @entity {
+  id: ID!
+  party: Party!
+  isLatest: Boolean!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  holdings: [HoldingState!]!
+  value: BigDecimal!
+  withUncalculatedPrices: Boolean!
+}
+
+type HoldingState @entity {
+  id: ID!
+  party: Party!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  asset: Asset!
+  amount: BigDecimal!
+  price: BigDecimal
+}
+
+type PartyState @entity {
+  id: ID!
+  party: Party!
+  timestamp: BigInt!
+  shares: ShareState!
+  portfolio: PortfolioState!
+}
+
+type InvestmentCost @entity {
+  # ID is the same ID as the Party
+  id: ID!
+  party: Party!
+
+  # Timestamps
+  latestTimestamp: BigInt!
+  latestBlockNumber: BigInt!
+
+  # Stats
+  depositCount: Int!
+  totalDeposits: BigDecimal!
+
+  withdrawalCount: Int!
+  totalWithdrawals: BigDecimal!
+
+  # Investment cost: Total deposits - Total Withdrawals
+  value: BigDecimal!
+  # Wheather the value is ok or it needs to fetch prices externally
+  withUncalculatedPrices: Boolean!
+
+  # Relations
+  deposits: [SharesBoughtEvent!]! @derivedFrom(field: "investmentCost")
+  withdrawals: [SharesRedeemedEvent!]! @derivedFrom(field: "investmentCost")
+}
+
+type Asset @entity {
+  id: ID!
+  name: String!
+  symbol: String!
+  decimals: Int!
+  type: AssetType!
+  firstSeen: BigInt!
+  # For Network stats
+  networkAssetHolding: NetworkAssetHolding!
+  networkAssetHoldingHistory: [NetworkAssetHolding!]! @derivedFrom(field: "asset")
+}
+
+type TokenSwap @entity {
+  id: ID!
+  party: Party!
+  transaction: Bytes!
+  sellToken: Asset!
+  buyToken: Asset!
+  soldAmount: BigDecimal!
+  boughtAmount: BigDecimal!
+  fee: BigDecimal!
+  timestamp: BigInt!
+}
+
+type LimitOrderFill @entity {
+  id: ID!
+  party: Party!
+  transaction: Bytes!
+  sellToken: Asset!
+  buyToken: Asset!
+  soldAmount: BigDecimal!
+  boughtAmount: BigDecimal!
+  fee: BigDecimal!
+  timestamp: BigInt!
+}
+
+type JoinRequest @entity {
+  id: ID!
+  party: Party!
+  user: User!
+  requestedSince: BigInt!
+  handledAt: BigInt
+  status: JoinRequestStatus!
+}
+
+type PartyActivity @entity {
+  id: ID!
+  txHash: String!
+  event: PartyEventType!
+  timestamp: BigInt!
+  incomingAssets: [AssetAmount!]
+  outcomingAssets: [AssetAmount!]
+  incomingShares: BigDecimal
+  outcomingShares: BigDecimal
+  party: Party!
+  user: User!
+}
+
+#################################################
+# Network stats
+#################################################
+
+type Network @entity {
+  id: ID!
+  timestamp: BigInt!
+  state: NetworkState!
+  stateHistory: [NetworkState!]! @derivedFrom(field: "network")
+}
+
+type NetworkState @entity {
+  id: ID!
+  network: Network!
+  timestamp: BigInt!
+  assetHoldings: [NetworkAssetHolding!]!
+  parties: Int!
+  investors: Int!
+  deposits: Int!
+  totalDeposits: BigDecimal!
+  withdraws: Int!
+  totalWithdrawals: BigDecimal!
+  withUncalculatedPrices: Boolean!
+}
+
+type NetworkAssetHolding @entity {
+  id: ID!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  asset: Asset!
+  amount: BigDecimal!
+  price: BigDecimal
+}

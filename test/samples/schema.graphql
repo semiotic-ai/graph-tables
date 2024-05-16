@@ -1,0 +1,1012 @@
+type Locker @entity {
+  " locker address "
+  id: ID!
+}
+
+type Manager @entity {
+  " position manager address "
+  id: ID!
+}
+
+type Aggregate @entity {
+  " pool aggregate (all pools added without the fee tier) (manager + token0 + token1) "
+  id: ID!
+
+  " token0 address "
+  token0: Token!
+
+  " token1 address "
+  token1: Token!
+
+  " position manager address "
+  manager: Manager!
+
+  " all aggregated reserves "
+  pools: [Reserve!]! @derivedFrom(field: "aggregate")
+
+  " all aggregated locks "
+  locks: [Lock!]! @derivedFrom(field: "aggregate")
+}
+
+type Reserve @entity {
+  " pool address "
+  id: ID!
+
+  " locked liquidity reserve "
+  liquidity: BigInt!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " pool object (pool address) "
+  pool: Pool!
+
+  " pool aggregate (all pools added without the fee tier) (manager + token0 + token1) "
+  aggregate: Aggregate!
+
+  " position manager address "
+  manager: Manager!
+
+  " all locks in a reserve (locks for a pool) "
+  locks: [Lock!]! @derivedFrom(field: "reserve")
+
+  " lock ids for a reserve "
+  lockIds: [String!]!
+
+  " locker address "
+  locker: Locker!
+}
+
+type Pool @entity {
+  " pool address "
+  id: ID!
+
+  " pool fee tier "
+  feeTier: BigInt!
+
+  " token0 address "
+  token0: Token!
+
+  " token1 address "
+  token1: Token!
+
+  " amount of token0 stored in the pool "
+  amount0: BigInt!
+
+  " amount of token1 stored in the pool "
+  amount1: BigInt!
+
+  " relative price of token0"
+  price0: BigDecimal!
+
+  " relative price of token1"
+  price1: BigDecimal!
+
+  " total in range liquidity "
+  activeLiquidity: BigInt!
+
+  " sqrtPriceX96, used for calculations "
+  sqrtPriceX96: BigInt!
+
+  " current pool tick "
+  currentTick: BigInt!
+
+  " all positions IDs "
+  positionIds: [String!]!
+
+  " all positions "
+  positions: [Position!]! @derivedFrom(field: "pool")
+
+  " reserve (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+}
+
+type Lock @entity {
+  " locker address + lock id "
+  id: ID!
+
+  " lock id "
+  lockId: String!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " liquidity stored in a lock (non withdrawable) "
+  lockedLiquidity: BigInt!
+
+  " amount0 stored in a lock (non withdrawable) "
+  lockedAmount0: BigInt!
+
+  " amount1 stored in a lock (non withdrawable) "
+  lockedAmount1: BigInt!
+
+  " USD value of the core asset locked (non withdrawable) "
+  lockedCoreUSD: BigDecimal!
+
+  " locked percent of the active liquidity (non withdrawable) "
+  lockedPercent: BigDecimal!
+
+  " lock owner address "
+  owner: Wallet!
+
+  " fee collection address "
+  collector: Wallet!
+
+  " additional fee collection address "
+  additionalCollector: Wallet!
+
+  " unlock date as a timestamp "
+  unlockDate: BigInt!
+
+  " nft position (manager + nft id) "
+  position: Position!
+
+  " (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+
+  " locker address "
+  locker: Locker!
+
+  " last update block "
+  blockNumber: BigInt!
+
+  " last update timestamp "
+  timestamp: BigInt!
+
+  # events
+
+  " list all lock events for a lock "
+  lockEvents: [LockEvent!]! @derivedFrom(field: "lock")
+
+  # " list all unlock events for a lock "
+  # unlockEvents: [UnlockEvent!]! @derivedFrom(field: "lock")
+
+  " list all withdraw events for a lock "
+  withdrawEvents: [WithdrawEvent!]! @derivedFrom(field: "lock")
+
+  " list all increase liquidity events for a lock "
+  increaseEvents: [IncreaseEvent!]! @derivedFrom(field: "lock")
+
+  " list all relock events for a lock "
+  relockEvents: [RelockEvent!]! @derivedFrom(field: "lock")
+
+  " list all transfer events for a lock "
+  transferOwnershipEvents: [TransferOwnershipEvent!]! @derivedFrom(field: "lock")
+
+  " list all migration events for a lock "
+  migrateEvents: [MigrateEvent!]! @derivedFrom(field: "lock")
+}
+
+type Position @entity {
+  " Position Manager + NFT ID "
+  id: ID!
+
+  " id of the non fungible position "
+  nftId: String!
+
+  " token0 address "
+  token0: Token!
+
+  " token1 address "
+  token1: Token!
+
+  " lower tick of the position "
+  lowerTick: BigInt!
+
+  " upper tick of the position "
+  upperTick: BigInt!
+
+  " total position liquidity "
+  liquidity: BigInt!
+
+  " amount of token0 stored in the position "
+  amount0: BigInt!
+
+  " amount of token1 stored in the position "
+  amount1: BigInt!
+
+  " core token USD TVL stored in the position (such as stablecoins, ETH, BNB etc.)"
+  coreTotalUSD: BigDecimal!
+
+  " lock nonce "
+  lock: Lock!
+
+  " pool address "
+  pool: Pool!
+
+  " aggregate "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+}
+
+type Token @entity {
+  " Smart contract address of the token "
+  id: ID!
+
+  " Name of the token, mirrored from the smart contract "
+  name: String!
+
+  " Symbol of the token, mirrored from the smart contract "
+  symbol: String!
+
+  " The number of decimal places this token uses, default to 18 "
+  decimals: Int!
+
+  " Dollar value locked in this token across all pools / amms"
+  tvlUSD: BigDecimal!
+
+  " Dollar value locked in this token across all pools / amms (non withdrawable)"
+  lockedUSD: BigDecimal!
+
+  " all reserves where this token is the main token "
+  mainTokenReserves: [Reserve!]! @derivedFrom(field: "mainToken")
+
+  " all reserves where this token is the core token "
+  baseTokenReserves: [Reserve!]! @derivedFrom(field: "baseToken")
+
+  " check if token is a base token "
+  baseTokens: [BaseToken!]! @derivedFrom(field: "token")
+
+  " last update block "
+  blockNumber: BigInt!
+
+  " last update timestamp "
+  timestamp: BigInt!
+}
+
+type BaseToken @entity {
+  " Smart contract address of the token "
+  id: ID!
+
+  " Token Data "
+  token: Token!
+
+  " If asset is a core liquid asset, set it's price. Useful for TVL calculations "
+  basePrice: BigInt!
+
+  " Timestamp for updating base price based on the timestamp threshold "
+  lastBaseUpdatedTimestamp: BigInt!
+}
+
+type Wallet @entity {
+  " account address "
+  id: ID!
+
+  locks: [Lock!]! @derivedFrom(field: "owner")
+  collectors: [Lock!]! @derivedFrom(field: "collector")
+  additionalCollectors: [Lock!]! @derivedFrom(field: "additionalCollector")
+}
+
+type EventCollection @entity {
+  " Locker Address "
+  id: ID!
+  lockEvents: [LockEvent!]! @derivedFrom(field: "eventsCollection")
+  lockEventsNumber: BigInt!
+  # unlockEvents: [UnlockEvent!]! @derivedFrom(field: "eventsCollection")
+  # unlockEventsNumber: BigInt!
+  withdrawEvents: [WithdrawEvent!]! @derivedFrom(field: "eventsCollection")
+  withdrawEventsNumber: BigInt!
+  increaseEvents: [IncreaseEvent!]! @derivedFrom(field: "eventsCollection")
+  increaseEventsNumber: BigInt!
+  relockEvents: [RelockEvent!]! @derivedFrom(field: "eventsCollection")
+  relockEventsNumber: BigInt!
+  transferOwnershipEvents: [TransferOwnershipEvent!]! @derivedFrom(field: "eventsCollection")
+  transferOwnershipEventsNumber: BigInt!
+  migrateEvents: [MigrateEvent!]! @derivedFrom(field: "eventsCollection")
+  migrateEventsNumber: BigInt!
+  collectorEvents: [CollectorEvent!]! @derivedFrom(field: "eventsCollection")
+  collectorEventsNumber: BigInt!
+  additionalCollectorEvents: [AdditionalCollectorEvent!]! @derivedFrom(field: "eventsCollection")
+  additionalCollectorEventsNumber: BigInt!
+}
+
+type LockEvent @entity(immutable: true) {
+  " locker address + event index "
+  id: ID!
+
+  " lock id "
+  lockId: String!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " liquidity stored in a lock (non withdrawable) "
+  lockedLiquidity: BigInt!
+
+  " amount0 stored in a lock (non withdrawable) "
+  lockedAmount0: BigInt!
+
+  " amount1 stored in a lock (non withdrawable) "
+  lockedAmount1: BigInt!
+
+  " USD value of the core asset locked (non withdrawable) "
+  lockedCoreUSD: BigDecimal!
+
+  " locked percent of the active liquidity (non withdrawable) "
+  lockedPercent: BigDecimal!
+
+  " lock owner address "
+  owner: Wallet!
+
+  " fee collection address "
+  collector: Wallet!
+
+  " additional fee collection address "
+  additionalCollector: Wallet!
+
+  " nft position (manager + nft id) "
+  position: Position
+
+  " Lock ID "
+  lock: Lock
+
+  " (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+
+  " locker address "
+  locker: Locker!
+
+  " unlock date as a timestamp "
+  unlockDate: BigInt!
+
+  " event block "
+  blockNumber: BigInt!
+
+  " event timestamp "
+  timestamp: BigInt!
+
+  " transaction hash "
+  transaction: Bytes!
+
+  " collection reference "
+  eventsCollection: EventCollection!
+}
+
+# type UnlockEvent @entity(immutable: true) {
+#   " locker address + event index "
+#   id: ID!
+
+#   " main token (does not follow token0 / token1 contract order)"
+#   mainToken: Token!
+
+#   " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+#   baseToken: Token!
+
+#   " liquidity unlocked in a lock (non withdrawable) "
+#   unlockedLiquidity: BigInt!
+
+#   " amount0 unlocked in a lock (non withdrawable) "
+#   unlockedAmount0: BigInt!
+
+#   " amount1 unlocked in a lock (non withdrawable) "
+#   unlockedAmount1: BigInt!
+
+#   " USD value of the core asset unlocked (non withdrawable) "
+#   unlockedCoreUSD: BigDecimal!
+
+#   " unlocked percent of the active liquidity (non withdrawable) "
+#   unlockedPercent: BigDecimal!
+
+#   " lock owner address "
+#   owner: Wallet!
+
+#   " fee collection address "
+#   collector: Wallet!
+
+#   " additional fee collection address "
+#   additionalCollector: Wallet!
+
+#   " nft position (manager + nft id) "
+#   position: Position
+
+#   " Lock ID "
+#   lock: Lock
+
+#   " (pool address) "
+#   reserve: Reserve!
+
+#   " aggregator "
+#   aggregate: Aggregate!
+
+#   " position manager "
+#   manager: Manager!
+
+#   " unlock date as a timestamp "
+#   unlockDate: BigInt!
+
+#   " event block "
+#   blockNumber: BigInt!
+
+#   " transaction hash "
+#   transaction: Bytes!
+
+#   " event timestamp "
+#   timestamp: BigInt!
+#   " collection reference "
+#   eventsCollection: EventCollection!
+# }
+
+type WithdrawEvent @entity(immutable: true) {
+  " locker address + event index "
+  id: ID!
+
+  " lock id "
+  lockId: String!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " liquidity withdrawn from a lock (non withdrawable) "
+  withdrawnLiquidity: BigInt!
+
+  " amount0 withdrawn from a lock (non withdrawable) "
+  withdrawnAmount0: BigInt!
+
+  " amount1 withdrawn from a lock (non withdrawable) "
+  withdrawnAmount1: BigInt!
+
+  " USD value of the core asset withdrawn "
+  withdrawnCoreUSD: BigDecimal!
+
+  " withdrawn percent of the active liquidity "
+  withdrawnPercent: BigDecimal!
+
+  " lock owner address "
+  owner: Wallet!
+
+  " fee collection address "
+  collector: Wallet!
+
+  " additional fee collection address "
+  additionalCollector: Wallet!
+
+  " nft position (manager + nft id) "
+  position: Position
+
+  " Lock ID "
+  lock: Lock
+
+  " (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+
+  " locker address "
+  locker: Locker!
+
+  " unlock date as a timestamp "
+  unlockDate: BigInt!
+
+  " event block "
+  blockNumber: BigInt!
+
+  " event timestamp "
+  timestamp: BigInt!
+
+  " transaction hash "
+  transaction: Bytes!
+
+  " collection reference "
+  eventsCollection: EventCollection!
+}
+
+type IncreaseEvent @entity(immutable: true) {
+  " locker address + event index "
+  id: ID!
+
+  " lock id "
+  lockId: String!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " liquidity stored before increase in a lock (non withdrawable) "
+  lockedLiquidityBefore: BigInt!
+
+  " amount0 stored before increase in a lock (non withdrawable) "
+  lockedAmount0Before: BigInt!
+
+  " amount1 stored before increase in a lock (non withdrawable) "
+  lockedAmount1Before: BigInt!
+
+  " USD value of the core asset locked before increase (non withdrawable) "
+  lockedCoreUSDBefore: BigDecimal!
+
+  " locked percent of the active liquidity before increase (non withdrawable) "
+  lockedPercentBefore: BigDecimal!
+
+  " liquidity stored in a lock after increase (non withdrawable) "
+  lockedLiquidityAfter: BigInt!
+
+  " amount0 stored in a lock after increase (non withdrawable) "
+  lockedAmount0After: BigInt!
+
+  " amount1 stored in a lock after increase (non withdrawable) "
+  lockedAmount1After: BigInt!
+
+  " USD value of the core asset locked after increase (non withdrawable) "
+  lockedCoreUSDAfter: BigDecimal!
+
+  " locked percent of the active liquidity after increase (non withdrawable) "
+  lockedPercentAfter: BigDecimal!
+
+  " lock owner address "
+  owner: Wallet!
+
+  " fee collection address "
+  collector: Wallet!
+
+  " additional fee collection address "
+  additionalCollector: Wallet!
+
+  " nft position (manager + nft id) "
+  position: Position
+
+  " Lock ID "
+  lock: Lock
+
+  " (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+
+  " locker address "
+  locker: Locker!
+
+  " unlock date as a timestamp "
+  unlockDate: BigInt!
+
+  " event block "
+  blockNumber: BigInt!
+
+  " event timestamp "
+  timestamp: BigInt!
+
+  " transaction hash "
+  transaction: Bytes!
+
+  " collection reference "
+  eventsCollection: EventCollection!
+}
+
+type RelockEvent @entity(immutable: true) {
+  " locker address + event index "
+  id: ID!
+
+  " lock id "
+  lockId: String!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " liquidity stored in a lock (non withdrawable) "
+  lockedLiquidity: BigInt!
+
+  " amount0 stored in a lock (non withdrawable) "
+  lockedAmount0: BigInt!
+
+  " amount1 stored in a lock (non withdrawable) "
+  lockedAmount1: BigInt!
+
+  " USD value of the core asset locked (non withdrawable) "
+  lockedCoreUSD: BigDecimal!
+
+  " locked percent of the active liquidity (non withdrawable) "
+  lockedPercent: BigDecimal!
+
+  " lock owner address  transfer "
+  owner: Wallet!
+
+  " fee collection address "
+  collector: Wallet!
+
+  " additional fee collection address "
+  additionalCollector: Wallet!
+
+  " nft position (manager + nft id) "
+  position: Position
+
+  " Lock ID "
+  lock: Lock
+
+  " (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+
+  " locker address "
+  locker: Locker!
+
+  " old unlock date as a timestamp "
+  unlockDateBefore: BigInt!
+
+  " new unlock date as a timestamp "
+  unlockDateAfter: BigInt!
+
+  " event block "
+  blockNumber: BigInt!
+
+  " event timestamp "
+  timestamp: BigInt!
+
+  " transaction hash "
+  transaction: Bytes!
+
+  " collection reference "
+  eventsCollection: EventCollection!
+}
+
+type TransferOwnershipEvent @entity(immutable: true) {
+  " locker address + event index "
+  id: ID!
+
+  " lock id "
+  lockId: String!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " liquidity stored in a lock (non withdrawable) "
+  lockedLiquidity: BigInt!
+
+  " amount0 stored in a lock (non withdrawable) "
+  lockedAmount0: BigInt!
+
+  " amount1 stored in a lock (non withdrawable) "
+  lockedAmount1: BigInt!
+
+  " USD value of the core asset locked (non withdrawable) "
+  lockedCoreUSD: BigDecimal!
+
+  " locked percent of the active liquidity (non withdrawable) "
+  lockedPercent: BigDecimal!
+
+  " lock owner address before transfer "
+  ownerBefore: Wallet!
+
+  " lock owner address after transfer "
+  ownerAfter: Wallet!
+
+  " fee collection address "
+  collector: Wallet!
+
+  " additional fee collection address "
+  additionalCollector: Wallet!
+
+  " nft position (manager + nft id) "
+  position: Position
+
+  " Lock ID "
+  lock: Lock
+
+  " (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+
+  " locker address "
+  locker: Locker!
+
+  " unlock date as a timestamp "
+  unlockDate: BigInt!
+
+  " event block "
+  blockNumber: BigInt!
+
+  " event timestamp "
+  timestamp: BigInt!
+
+  " transaction hash "
+  transaction: Bytes!
+
+  " collection reference "
+  eventsCollection: EventCollection!
+}
+
+type MigrateEvent @entity(immutable: true) {
+  " locker address + event index "
+  id: ID!
+
+  " lock id "
+  lockId: String!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " liquidity stored in a lock (non withdrawable) "
+  lockedLiquidity: BigInt!
+
+  " amount0 stored in a lock (non withdrawable) "
+  lockedAmount0: BigInt!
+
+  " amount1 stored in a lock (non withdrawable) "
+  lockedAmount1: BigInt!
+
+  " USD value of the core asset locked (non withdrawable) "
+  lockedCoreUSD: BigDecimal!
+
+  " locked percent of the active liquidity (non withdrawable) "
+  lockedPercent: BigDecimal!
+
+  " lock owner address  transfer "
+  owner: Wallet!
+
+  " fee collection address "
+  collector: Wallet!
+
+  " additional fee collection address "
+  additionalCollector: Wallet!
+
+  " nft position (manager + nft id) "
+  position: Position
+
+  " Lock ID "
+  lock: Lock
+
+  " (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+
+  " locker address "
+  locker: Locker!
+
+  " unlock date as a timestamp "
+  unlockDate: BigInt!
+
+  " event block "
+  blockNumber: BigInt!
+
+  " event timestamp "
+  timestamp: BigInt!
+
+  " transaction hash "
+  transaction: Bytes!
+
+  " collection reference "
+  eventsCollection: EventCollection!
+}
+
+type CollectorEvent @entity(immutable: true) {
+  " locker address + event index "
+  id: ID!
+
+  " lock id "
+  lockId: String!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " liquidity stored in a lock (non withdrawable) "
+  lockedLiquidity: BigInt!
+
+  " amount0 stored in a lock (non withdrawable) "
+  lockedAmount0: BigInt!
+
+  " amount1 stored in a lock (non withdrawable) "
+  lockedAmount1: BigInt!
+
+  " USD value of the core asset locked (non withdrawable) "
+  lockedCoreUSD: BigDecimal!
+
+  " locked percent of the active liquidity (non withdrawable) "
+  lockedPercent: BigDecimal!
+
+  " lock owner address  transfer "
+  owner: Wallet!
+
+  " old fee collection address "
+  collectorBefore: Wallet!
+
+  " new fee collection address "
+  collectorAfter: Wallet!
+
+  " additional fee collection address "
+  additionalCollector: Wallet!
+
+  " nft position (manager + nft id) "
+  position: Position
+
+  " Lock ID "
+  lock: Lock
+
+  " (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+
+  " locker address "
+  locker: Locker!
+
+  " unlock date as a timestamp "
+  unlockDate: BigInt!
+
+  " event block "
+  blockNumber: BigInt!
+
+  " event timestamp "
+  timestamp: BigInt!
+
+  " transaction hash "
+  transaction: Bytes!
+
+  " collection reference "
+  eventsCollection: EventCollection!
+}
+
+type AdditionalCollectorEvent @entity(immutable: true) {
+  " locker address + event index "
+  id: ID!
+
+  " lock id "
+  lockId: String!
+
+  " main token (does not follow token0 / token1 contract order)"
+  mainToken: Token!
+
+  " core tokens such as stablecoins, ETH, BNB etc. (does not follow token0 / token1 contract order)"
+  baseToken: Token!
+
+  " liquidity stored in a lock (non withdrawable) "
+  lockedLiquidity: BigInt!
+
+  " amount0 stored in a lock (non withdrawable) "
+  lockedAmount0: BigInt!
+
+  " amount1 stored in a lock (non withdrawable) "
+  lockedAmount1: BigInt!
+
+  " USD value of the core asset locked (non withdrawable) "
+  lockedCoreUSD: BigDecimal!
+
+  " locked percent of the active liquidity (non withdrawable) "
+  lockedPercent: BigDecimal!
+
+  " lock owner address  transfer "
+  owner: Wallet!
+
+  " fee collection address "
+  collector: Wallet!
+
+  " old additional fee collection address "
+  additionalCollectorBefore: Wallet!
+
+  " new additional fee collection address "
+  additionalCollectorAfter: Wallet!
+
+  " nft position (manager + nft id) "
+  position: Position
+
+  " Lock ID "
+  lock: Lock
+
+  " (pool address) "
+  reserve: Reserve!
+
+  " aggregator "
+  aggregate: Aggregate!
+
+  " position manager "
+  manager: Manager!
+
+  " locker address "
+  locker: Locker!
+
+  " unlock date as a timestamp "
+  unlockDate: BigInt!
+
+  " event block "
+  blockNumber: BigInt!
+
+  " event timestamp "
+  timestamp: BigInt!
+
+  " transaction hash "
+  transaction: Bytes!
+
+  " collection reference "
+  eventsCollection: EventCollection!
+}
+
+type _Schema_
+  @fulltext(
+    name: "tokenSearch"
+    language: en
+    algorithm: rank
+    include: [{ entity: "Token", fields: [{ name: "symbol" }, { name: "name" }, { name: "id" }] }]
+  )
+  @fulltext(
+    name: "poolSearch"
+    language: en
+    algorithm: rank
+    include: [{ entity: "Pool", fields: [{ name: "id" }] }]
+  )
+  @fulltext(
+    name: "lockSearch"
+    language: en
+    algorithm: rank
+    include: [{ entity: "Lock", fields: [{ name: "lockId" }] }]
+  )
+  @fulltext(
+    name: "reserveSearch"
+    language: en
+    algorithm: rank
+    include: [{ entity: "Reserve", fields: [{ name: "id" }] }]
+  )
+  @fulltext(
+    name: "walletSearch"
+    language: en
+    algorithm: rank
+    include: [{ entity: "Wallet", fields: [{ name: "id" }] }]
+  )
