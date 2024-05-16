@@ -13,11 +13,11 @@ graph-tables</h1>
   </a>
 </p>
 <p align="center">
-  <a href="https://www.npmjs.com/package/graph-tables">
-    <img alt="npm install" src="https://img.shields.io/badge/npm%20i-graph--tables--test-brightgreen">
+  <a href="https://www.npmjs.com/package/@semiotic-labs/graph-tables">
+    <img alt="npm install" src="https://img.shields.io/badge/npm%20i-graph--tables-brightgreen">
   </a>
   <a href="https://github.com/semiotic-ai/graph-tables/tags">
-    <img alt="version" src="https://img.shields.io/npm/v/graph-tables?color=green&label=version">
+    <img alt="version" src="https://img.shields.io/npm/v/@semiotic-labs/graph-tables?color=green&label=version">
   </a>
 </p>
 
